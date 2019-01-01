@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-namespace dicr\format;
+namespace dicr\csv;
 
 use yii\base\BaseObject;
 use yii\base\Exception;

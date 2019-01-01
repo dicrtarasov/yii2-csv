@@ -2,7 +2,7 @@
 namespace dicr\test;
 
 use PHPUnit\Framework\TestCase;
-use dicr\format\CSVFile;
+use dicr\csv\CSVFile;
 
 /**
  * Test CSVFile

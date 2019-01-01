@@ -1,5 +1,5 @@
 <?php
-namespace dicr\format;
+namespace dicr\csv;
 
 use yii\base\Arrayable;
 use yii\base\Component;

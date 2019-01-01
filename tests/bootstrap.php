@@ -17,7 +17,7 @@ new Application([
 	'basePath' => __DIR__,
 	'vendorPath' => dirname(__DIR__).'/vendor',
 	'aliases' => [
-		'@dicr/format' => dirname(__DIR__) . '/src',
+		'@dicr/csv' => dirname(__DIR__) . '/src',
 		'@dicr/tests' => dirname(__DIR__) . '/tests'
 	],
 	'components' => [

@@ -2,7 +2,7 @@
 namespace dicr\test;
 
 use PHPUnit\Framework\TestCase;
-use dicr\format\CSVResponseFormatter;
+use dicr\csv\CSVResponseFormatter;
 
 /**
  * Test
@@ -65,5 +65,4 @@ class CSVResponseFormatterTest extends TestCase {
 		self::assertInternalType('resource', $response->stream);
 		self::assertNull($response->data);
 	}
-	
 }
