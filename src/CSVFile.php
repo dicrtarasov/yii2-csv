@@ -6,7 +6,6 @@ use yii\base\BaseObject;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
-
 /**
  * CSV File.
  * 
