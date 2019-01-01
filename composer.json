@@ -1,0 +1,40 @@
+{
+	"name" : "dicr/yii2-format",
+	"description" : "Утилиты форматирования для Yii2",
+	"type" : "library",
+	"authors" : [{
+			"name" : "Igor Tarasov",
+			"email" : "develop@dicr.org",
+			"homepage" : "http://dicr.org",
+			"role" : "developer"
+		}
+	],
+	"minimum-stability" : "stable",
+	"require" : {
+		"yiisoft/yii2" : "~2.0",
+		"phpunit/phpunit" : "~6"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"dicr\\format\\" : "src"
+		}
+	},
+	"keywords" : [
+		"php yii2 format"
+	],
+	"repositories" : [{
+			"type" : "composer",
+			"url" : "https://asset-packagist.org"
+		}
+	],
+	"homepage" : "https://gitlab.com/dicrtarasov/yii2-format",
+	"support" : {
+		"source" : "https://gitlab.com/dicrtarasov/yii2-format.git"
+	},
+	"require-dev" : {
+		"yiisoft/yii2-codeception" : "~2.0"
+	},
+	"scripts" : {
+		"test" : "./vendor/bin/phpunit --bootstrap ./tests/bootstrap.php"
+	}
+}
