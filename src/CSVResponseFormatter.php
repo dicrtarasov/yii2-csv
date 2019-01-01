@@ -7,7 +7,6 @@ use yii\base\Exception;
 use yii\base\Model;
 use yii\data\DataProviderInterface;
 use yii\db\Query;
-use yii\web\Response;
 use yii\web\ResponseFormatterInterface;
 
 /**
@@ -240,7 +239,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * Форматирует Web-ответ в виде CSV-файла
      * 
-     * @param Response $response
+     * @param \yii\web\Response|null $response
      * @return \yii\web\Response
      */
     public function format($response=null) {
