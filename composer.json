@@ -1,7 +1,7 @@
 {
 	"name" : "dicr/yii2-csv",
 	"description" : "CSV для Yii2",
-	"type" : "library",
+	"type" : "yii2-extension",
 	"authors" : [{
 			"name" : "Igor Tarasov",
 			"email" : "develop@dicr.org",
