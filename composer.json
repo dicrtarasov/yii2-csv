@@ -1,6 +1,6 @@
 {
 	"name" : "dicr/yii2-csv",
-	"description" : "CSV для Yii2",
+	"description" : "CSV for Yii2",
 	"type" : "yii2-extension",
 	"authors" : [{
 			"name" : "Igor Tarasov",
@@ -11,6 +11,7 @@
 	],
 	"minimum-stability" : "stable",
 	"require" : {
+		"php" : ">=7.0",
 		"yiisoft/yii2" : "~2.0"
 	},
 	"autoload" : {
