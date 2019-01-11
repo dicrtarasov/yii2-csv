@@ -270,10 +270,8 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     }
 
     /**
-     * Форматирует Web-ответ в виде CSV-файла
-     *
-     * @param \yii\base\Response|null $response
-     * @return \yii\base\Response
+     * {@inheritDoc}
+     * @see \yii\web\ResponseFormatterInterface::format()
      */
     public function format($response = null)
     {
