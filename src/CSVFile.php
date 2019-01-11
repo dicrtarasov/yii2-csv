@@ -35,7 +35,7 @@ class CSVFile extends BaseObject implements \Iterator
     public $handle;
 
     /** @var int текущий номер строки файла */
-    private $lineNo = 0;
+    private $_lineNo = 0;
 
     /** @var mixed текущие данные для Iterable */
     private $current = null;
@@ -62,7 +62,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function getLineNo()
     {
-        return $this->lineNo;
+        return $this->_lineNo;
     }
 
     /**
@@ -78,7 +78,7 @@ class CSVFile extends BaseObject implements \Iterator
                 throw new Exception('ошибка отмотки: ' . $error['message']);
             }
         }
-        $this->lineNo = 0;
+        $this->_lineNo = 0;
     }
 
     /**
@@ -134,7 +134,7 @@ class CSVFile extends BaseObject implements \Iterator
             }
 
             $this->handle = @fopen($this->filename, 'rt+');
-            if (empty($this->handle)) {
+            if (!is_resource($this->handle)) {
                 $error = error_get_last();
                 throw new Exception($error['message']);
             }
@@ -144,7 +144,7 @@ class CSVFile extends BaseObject implements \Iterator
         $line = fgetcsv($this->handle, null, $this->delimiter, $this->enclosure, $this->escape);
 
         if ($line !== false) {
-            $this->lineNo ++;
+            $this->_lineNo ++;
             if (empty($line))
                 $line = [];
             else
@@ -174,7 +174,7 @@ class CSVFile extends BaseObject implements \Iterator
             }
 
             $this->handle = @fopen($filename, 'wt+');
-            if (empty($this->handle)) {
+            if (!is_resource($this->handle)) {
                 $error = error_get_last();
                 throw new Exception($error['message']);
             }
@@ -189,7 +189,7 @@ class CSVFile extends BaseObject implements \Iterator
             throw new Exception($error['message']);
         }
 
-        $this->lineNo ++;
+        $this->_lineNo ++;
 
         return $ret;
     }

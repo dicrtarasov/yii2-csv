@@ -1,6 +1,8 @@
 <?php
 namespace dicr\csv;
 
+use ArrayAccess;
+use Traversable;
 use yii\base\Arrayable;
 use yii\base\Component;
 use yii\base\Exception;
@@ -120,9 +122,9 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * Конвертирует данные в Traversable
      *
-     * @param array|\Traversable|\yii\base\Arrayable|\yii\db\Query|\yii\data\DataProviderInterface $data
+     * @param array|object|\Traversable|Arrayable|Query|DataProviderInterface $data
      * @throws Exception
-     * @return \Traversable
+     * @return array|Traversable
      */
     protected static function convertData($data)
     {
@@ -130,7 +132,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             return [];
         }
 
-        if (is_array($data) || ($data instanceof \Traversable)) {
+        if (is_array($data) || ($data instanceof Traversable)) {
             return $data;
         }
 
@@ -156,12 +158,10 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * Конвертирует строку данных в массив значений
      *
-     * @param array|object|Model $row - массив
-     *        - объект
-     *        - Model
+     * @param array|object|Traversable|ArrayAccess|Arrayable|Model $row - данные строки
      * @param array|false $fields
      *
-     * @return array массив значений
+     * @return array|ArrayAccess|Traversable массив значений
      */
     protected function convertRow($row)
     {
@@ -169,7 +169,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             return [];
         }
 
-        if (is_array($row) || ($row instanceof \Traversable)) {
+        if (is_array($row) || ($row instanceof Traversable) || ($row instanceof \ArrayAccess)) {
             return $row;
         }
 
@@ -179,6 +179,10 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
 
         if ($row instanceof Model) {
             return $row->attributes;
+        }
+
+        if (is_object($row)) {
+            return (array)$row;
         }
 
         throw new Exception('unknown row format');
@@ -241,12 +245,21 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
 
                 $line = [];
 
-                if (!empty($this->headers)) {
-                    // если заданы заголовки, то выбираем только заданные поля в заданной последовательсти
+                if (!empty($this->headers)) { // если заданы заголовки, то выбираем только заданные поля
+                    // проверяем доступность прямой выборки игдекса из массива
+                    if (!is_array($row) && !($row instanceof ArrayAccess)) {
+                        throw new Exception('to use headers, row must be array or ArrayAccess type');
+                    }
+
                     foreach (array_keys($this->headers) as $field) {
                         $line[] = $row[$field] ?? null;
                     }
-                } else {
+                } else { // обходим все поля
+                    // проверяем что данные доступны для обхода
+                    if (!is_array($row) && !($row instanceof Traversable)) {
+                        throw new Exception('without headers row must be an array or Traversable type');
+                    }
+
                     // если заголовки не заданы, то выбираем все поля не меняя последовательность
                     foreach ($row as $col) {
                         $line[] = $col;
@@ -263,8 +276,8 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * Форматирует Web-ответ в виде CSV-файла
      *
-     * @param \yii\web\Response|null $response
-     * @return \yii\web\Response
+     * @param \yii\base\Response|null $response
+     * @return \yii\base\Response
      */
     public function format($response = null)
     {
