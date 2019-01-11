@@ -29,7 +29,7 @@ use yii\web\ResponseFormatterInterface;
  * Для чтения нужно задать либо handle, либо filename. Если не задан handle, то открывается filename.
  * При записи, если не задан handle и filename, то handle открывается в php://temp.
  *
- * @property-read $mimeType тип контента на основании contentType и charset
+ * @property-read string|null $mimeType тип контента на основании contentType и charset
  * @author Igor (Dicr) Tarasov <develop@dicr.org>
  * @version 2018
  */
@@ -224,14 +224,10 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             throw new Exception('ошибка создания временного файла');
         }
 
-        $first = true;
-
         if (! empty($data)) {
-            if ($first) {
-                if (! empty($this->headers)) {
-                    $this->writeLine($this->headers, $handle);
-                }
-                $first = false;
+
+            if (! empty($this->headers)) {
+                $this->writeLine($this->headers, $handle);
             }
 
             foreach ($this->convertData($data) as $row) {

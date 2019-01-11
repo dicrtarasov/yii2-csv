@@ -133,8 +133,11 @@ class CSVFile extends BaseObject implements \Iterator
                 throw new InvalidConfigException('filename or handler');
             }
 
-            $this->handle = @fopen($this->filename, 'rt+');
-            if (!is_resource($this->handle)) {
+            $handle = @fopen($this->filename, 'rt+');
+
+            if (is_resource($handle)) {
+                $this->handle = $handle;
+            } else {
                 $error = error_get_last();
                 throw new Exception($error['message']);
             }
@@ -173,8 +176,10 @@ class CSVFile extends BaseObject implements \Iterator
                 $filename = 'php://temp';
             }
 
-            $this->handle = @fopen($filename, 'wt+');
-            if (!is_resource($this->handle)) {
+            $handle = @fopen($filename, 'wt+');
+            if (is_resource($handle)) {
+                $this->handle = $handle;
+            } else {
                 $error = error_get_last();
                 throw new Exception($error['message']);
             }
