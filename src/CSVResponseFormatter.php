@@ -11,6 +11,19 @@ use yii\web\ResponseFormatterInterface;
 
 /**
  * CSV File.
+ *
+ * Конвертирует данные из \yii\web\Response::data в CSV Response::stream, для возврата ответа в виде CSV-файла.
+ * В Response::data можно устанавливать значения типа:
+ * - null (пустой файл)
+ * - array (обычный массив или ассоциативный, если установлены headers)
+ * - object
+ * - Traversable
+ * - yii\base\Arrayable
+ * - yii\db\Query
+ * - yii\data\DataProviderInterface
+ *
+ *
+ *
  * Для чтения нужно задать либо handle, либо filename. Если не задан handle, то открывается filename.
  * При записи, если не задан handle и filename, то handle открывается в php://temp.
  *
@@ -122,18 +135,19 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
         }
 
         if ($data instanceof Arrayable) {
-            /** @var Arrayable $data */
             return $data->toArray();
         }
 
         if ($data instanceof Query) {
-            /** @var Query $data */
             return $data->each();
         }
 
         if ($data instanceof DataProviderInterface) {
-            /** @var DataProviderInterface $data */
             return $data->getModels();
+        }
+
+        if (is_object($data)) {
+            return (array)$data;
         }
 
         throw new Exception('неизвестный тип в response->data');
@@ -226,8 +240,17 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
                 }
 
                 $line = [];
-                foreach ($row as $col) {
-                    $line[] = $col;
+
+                if (!empty($this->headers)) {
+                    // если заданы заголовки, то выбираем только заданные поля в заданной последовательсти
+                    foreach (array_keys($this->headers) as $field) {
+                        $line[] = $row[$field] ?? null;
+                    }
+                } else {
+                    // если заголовки не заданы, то выбираем все поля не меняя последовательность
+                    foreach ($row as $col) {
+                        $line[] = $col;
+                    }
                 }
 
                 $this->writeLine($line, $handle);
