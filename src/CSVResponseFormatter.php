@@ -217,7 +217,6 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
      */
     public function formatData($data)
     {
-
         // открываем файл
         $handle = fopen('php://temp', 'w+');
         if (empty($handle)) {
