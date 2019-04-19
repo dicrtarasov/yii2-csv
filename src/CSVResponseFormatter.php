@@ -41,18 +41,6 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /** @var string Content-Type excel */
     const CONTENT_TYPE_EXCEL = 'application/vnd.ms-excel';
 
-    /** @var string кодирова utf-8 */
-    const CHARSET_UTF8 = 'utf-8';
-
-    /** @var string кодировка Excel */
-    const CHARSET_EXCEL = 'windows-1251';
-
-    /** @var string стандартный разделитель полей - запятая */
-    const DELIMITER_COMMA = ',';
-
-    /** @var string разделитель полей Excel */
-    const DELIMITER_EXCEL = ';';
-
     /** @var string|null имя файла */
     public $filename;
 
@@ -60,16 +48,16 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     public $contentType = self::CONTENT_TYPE_TEXT;
 
     /** @var string|null charset */
-    public $charset = self::CHARSET_UTF8;
+    public $charset = CSVFile::CHARSET_EXCEL;
 
     /** @var string|null разделитель полей */
-    public $delimiter = self::DELIMITER_COMMA;
+    public $delimiter = CSVFile::DELIMITER_EXCEL;
 
     /** @var string|null ограничитель строк */
-    public $enclosure = '"';
+    public $enclosure = CSVFile::ENCLOSURE_DEFAULT;
 
     /** @var string|null экранирующий символ */
-    public $escape = "\\";
+    public $escape = CSVFile::ESCAPE_DEFAULT;
 
     /**
      * @var array|null шапка
@@ -80,15 +68,6 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
 
     /** @var callable|null function($row, CSVResponseFormatter $formatter): array */
     public $format;
-
-    /**
-     * {@inheritdoc}
-     * @see \yii\base\BaseObject::init()
-     */
-    public function init()
-    {
-        parent::init();
-    }
 
     /**
      * Запись строки в CSV
@@ -196,16 +175,23 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     public function getMimeType()
     {
         $mimeType = null;
+
         if (! empty($this->contentType)) {
+
             $mimeType = $this->contentType;
+
             if (! empty($this->charset) && ! preg_match('~charset~uism', $this->contentType)) {
+
                 $charset = $this->charset;
+
                 if (preg_match('~cp1251~uism', $charset)) {
                     $charset = 'windows-1251';
                 }
+
                 $mimeType .= '; charset=' . $charset;
             }
         }
+
         return $mimeType;
     }
 
@@ -213,20 +199,23 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
      * Форматирует ответ в CSV-файл
      *
      * @param array|\Traversable|\yii\base\Arrayable|\yii\db\Query|\yii\data\DataProviderInterface $data данные
-     * @return resource $handle
+     * @return CSVFile
      */
     public function formatData($data)
     {
-        // открываем файл
-        $handle = fopen('php://temp', 'w+');
-        if (empty($handle)) {
-            throw new Exception('ошибка создания временного файла');
-        }
+        // CSV-файл для вывода
+        $csvFile = new CSVFile([
+            'filename' => 'php://temp',
+            'delimiter' => $this->delimiter,
+            'escape' => $this->escape,
+            'enclosure' => $this->enclosure,
+            'charset' => $this->charset
+        ]);
 
         if (! empty($data)) {
 
             if (! empty($this->headers)) {
-                $this->writeLine($this->headers, $handle);
+                $csvFile->writeLine($this->headers);
             }
 
             foreach ($this->convertData($data) as $row) {
@@ -261,11 +250,11 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
                     }
                 }
 
-                $this->writeLine($line, $handle);
+                $csvFile->writeLine($line);
             }
         }
 
-        return $handle;
+        return $csvFile;
     }
 
     /**
@@ -278,12 +267,13 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             $response = \Yii::$app->response;
         }
 
-        $handle = $this->formatData($response->data);
+        $csvFile = $this->formatData($response->data);
 
-        $response->setDownloadHeaders($this->filename, $this->getMimeType(), false, ftell($handle));
+        $response->setDownloadHeaders($this->filename, $this->getMimeType(), false, ftell($csvFile->handle));
 
-        rewind($handle);
-        $response->stream = $handle;
+        $csvFile->reset();
+
+        $response->stream = $csvFile->handle;
         $response->data = null;
 
         return $response;

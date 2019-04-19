@@ -66,7 +66,7 @@ class FileIterator extends BaseObject implements \Iterator
         }
 
         // открываем файл
-        $this->handle = @fopen($this->filename, 'rt', $this->context);
+        $this->handle = @fopen($this->filename, 'rt', false, $this->context);
         if (empty($this->handle)) {
             $err = error_get_last();
             error_clear_last();
