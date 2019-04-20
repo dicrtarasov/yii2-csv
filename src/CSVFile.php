@@ -165,9 +165,9 @@ class CSVFile extends BaseObject implements \Iterator
      * Если задан charset, то конвертирует кодировку.
      *
      * @throws \yii\base\Exception ошибка открытия файла
-     * @return void
+     * @return string[] текущую строку
      */
-    protected function readLine()
+    public function readLine()
     {
         // открываем файл
         if (empty($this->handle)) {
@@ -207,6 +207,8 @@ class CSVFile extends BaseObject implements \Iterator
             // декодируем данные
             $this->current = $this->decode($line);
         }
+
+        return $this->current;
     }
 
     /**
