@@ -21,26 +21,29 @@ class CSVFile extends BaseObject implements \Iterator
     /** @var string кодировка Excel */
     const CHARSET_EXCEL = 'cp1251';
 
+    /** @var string кодировка по-умолчанию */
+    const CHARSET_DEFAULT = 'utf-8';
+
+    /** @var string кодировка для преобразования при чтении/записи */
+    public $charset = self::CHARSET_DEFAULT;
+
     /** @var string разделитель полей по-умолчанию */
     const DELIMITER_DEFAULT = ',';
 
     /** @var string раздлитель полей Excel */
     const DELIMITER_EXCEL = ';';
 
-    /** @var string ограничиель полей по-умолчанию */
-    const ENCLOSURE_DEFAULT = '"';
-
-    /** @var string символ экранирования по-умолчанию */
-    const ESCAPE_DEFAULT = '\\';
-
-    /** @var string|null кодировка для преобразования при чтении/записи */
-    public $charset;
-
     /** @var string разделитель полей */
     public $delimiter = self::DELIMITER_DEFAULT;
 
+    /** @var string ограничиель полей по-умолчанию */
+    const ENCLOSURE_DEFAULT = '"';
+
     /** @var string символ ограничения строк в полях */
     public $enclosure = self::ENCLOSURE_DEFAULT;
+
+    /** @var string символ экранирования по-умолчанию */
+    const ESCAPE_DEFAULT = '\\';
 
     /** @var string символ для экранирования */
     public $escape = self::ESCAPE_DEFAULT;
@@ -71,7 +74,7 @@ class CSVFile extends BaseObject implements \Iterator
         // если задана кодировка по-умолчанию utf-8, то удаляем значение
         $this->charset = trim($this->charset);
         if ($this->charset == '' || preg_match('~^utf\-?8$~uism', $this->charset)) {
-            $this->charset = null;
+            $this->charset = self::CHARSET_DEFAULT;
         }
 
         // контекст
@@ -129,7 +132,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     protected function decode(array $line)
     {
-        if (isset($this->charset)) { // конвертируем кодировку
+        if ($this->charset != self::CHARSET_DEFAULT) { // конвертируем кодировку
             foreach ($line as $key => $val) {
                 $line[$key] = @iconv($this->charset, 'utf-8//TRANSLIT', (string) $val);
             }
@@ -146,7 +149,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     protected function encode(array $line)
     {
-        if (isset($this->charset)) {
+        if (($this->charset != self::CHARSET_DEFAULT)) {
             $charset = $this->charset;
             if (strpos($charset, '//') === false) {
                 $charset .= '//TRANSLIT';
