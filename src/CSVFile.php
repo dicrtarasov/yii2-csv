@@ -186,6 +186,7 @@ class CSVFile extends BaseObject implements \Iterator
         }
 
         // читаем строку
+        error_clear_last();
         $line = @fgetcsv($this->handle, null, $this->delimiter, $this->enclosure, $this->escape);
         if ($line === false) {
             $err = error_get_last();
