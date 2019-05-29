@@ -60,11 +60,12 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     public $escape = CSVFile::ESCAPE_DEFAULT;
 
     /**
-     * @var array|null шапка
+     * @var array|null поля, ассоциативный массив в виде field => title
      *      null|false - не выводить
+     *      true - определить заголовки автоматически
      *      array - заголовки колонок
      */
-    public $headers = true;
+    public $fields = true;
 
     /** @var callable|null function($row, CSVResponseFormatter $formatter): array */
     public $format;
@@ -214,8 +215,9 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
 
         if (! empty($data)) {
 
-            if (! empty($this->headers)) {
-                $csvFile->writeLine($this->headers);
+            // пишем заголовок
+            if (! empty($this->fields)) {
+                $csvFile->writeLine(array_values($this->fields));
             }
 
             foreach ($this->convertData($data) as $row) {
@@ -229,22 +231,22 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
 
                 $line = [];
 
-                if (!empty($this->headers)) { // если заданы заголовки, то выбираем только заданные поля
-                    // проверяем доступность прямой выборки игдекса из массива
+                if (!empty($this->fields)) { // если заданы заголовки, то выбираем только заданные поля в заданной последовательности
+                    // проверяем доступность прямой выборки индекса из массива
                     if (!is_array($row) && !($row instanceof ArrayAccess)) {
-                        throw new Exception('to use headers, row must be array or ArrayAccess type');
+                        throw new Exception('для использования списка полей fields необходимо чтобы элемент данных был либо array, либо типа ArrayAccess');
                     }
 
-                    foreach (array_keys($this->headers) as $field) {
+                    foreach (array_keys($this->fields) as $field) {
                         $line[] = $row[$field] ?? null;
                     }
                 } else { // обходим все поля
                     // проверяем что данные доступны для обхода
                     if (!is_array($row) && !($row instanceof Traversable)) {
-                        throw new Exception('without headers row must be an array or Traversable type');
+                        throw new Exception('элемент данных должен быть либо array, либо типа Traversable');
                     }
 
-                    // если заголовки не заданы, то выбираем все поля не меняя последовательность
+                    // обходим тип Traversable
                     foreach ($row as $col) {
                         $line[] = $col;
                     }
@@ -267,14 +269,20 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             $response = \Yii::$app->response;
         }
 
+        // пишем во временный CSVFile (php://temp)
         $csvFile = $this->formatData($response->data);
 
+        // сразу очищаем память
+        $response->data = null;
+
+        // заголовки загрузки файла
         $response->setDownloadHeaders($this->filename, $this->getMimeType(), false, ftell($csvFile->handle));
 
+        // перематываем файл в начало
         $csvFile->reset();
 
+        // устанавливаем поток для скачивания
         $response->stream = $csvFile->handle;
-        $response->data = null;
 
         return $response;
     }

@@ -114,9 +114,9 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function reset()
     {
+        error_clear_last();
         if (!empty($this->handle) && @rewind($this->handle) === false) {
             $err = error_get_last();
-            error_clear_last();
             throw new Exception('ошибка переметки файла: ' . $this->filename .': '. $err['message']);
         }
 
@@ -235,10 +235,10 @@ class CSVFile extends BaseObject implements \Iterator
                 $this->filename = 'php://temp';
             }
 
+            error_clear_last();
             $this->handle = @fopen($this->filename, 'wt+', false, $this->context);
             if (empty($this->handle)) {
                 $err = error_get_last();
-                error_clear_last();
                 throw new Exception('ошибка открытия файла: ' . $this->filename . ': ' . $err['message']);
             }
         }
@@ -247,10 +247,10 @@ class CSVFile extends BaseObject implements \Iterator
         $line = $this->encode($line);
 
         // пишем в файл
+        error_clear_last();
         $ret = @fputcsv($this->handle, $line, $this->delimiter, $this->enclosure, $this->escape);
         if ($ret === false) {
             $err = error_get_last();
-            error_clear_last();
             throw new Exception('ошибка записи в файл: ' . $this->filename . ': ' . $err['message']);
         }
 
