@@ -320,8 +320,11 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function __destruct()
     {
-        if (!empty($this->handle)) {
+        // нельзя закрывать файл, потому что он используется дальше после удаления этого объекта,
+        // например в CSVResponseFormatter !!
+
+        /*if (!empty($this->handle)) {
             @fclose($this->handle);
-        }
+        }*/
     }
 }

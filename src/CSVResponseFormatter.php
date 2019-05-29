@@ -272,7 +272,6 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
         // пишем во временный CSVFile (php://temp)
         $csvFile = $this->formatData($response->data);
 
-        // сразу очищаем память
         $response->data = null;
 
         // заголовки загрузки файла
