@@ -225,9 +225,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
                     $row = ($this->format)($row, $this);
                 }
 
-                if (! is_array($row)) {
-                    $row = $this->convertRow($row);
-                }
+                $row = $this->convertRow($row);
 
                 $line = [];
 
