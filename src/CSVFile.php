@@ -55,13 +55,13 @@ class CSVFile extends BaseObject implements \Iterator
     public $context;
 
     /** @var resource|null файловый десриптор */
-    protected $handle;
+    protected $_handle;
 
     /** @var int|null текущий номер строки файла */
-    protected $lineNo;
+    protected $_lineNo;
 
     /** @var string[]|null текущие данные для Iterable */
-    protected $current = null;
+    protected $_current = null;
 
     /**
      * {@inheritdoc}
@@ -78,11 +78,7 @@ class CSVFile extends BaseObject implements \Iterator
         }
 
         // контекст
-        if (empty($this->context)) {
-            $this->context = [];
-        }
-
-        if (is_array($this->context)) {
+        if (!is_resource($this->context)) {
             $this->context = stream_context_create($this->context);
         }
     }
@@ -94,7 +90,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function getLineNo()
     {
-        return $this->lineNo;
+        return $this->_lineNo;
     }
 
     /**
@@ -104,7 +100,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function getHandle()
     {
-        return $this->handle;
+        return $this->_handle;
     }
 
     /**
@@ -115,13 +111,13 @@ class CSVFile extends BaseObject implements \Iterator
     public function reset()
     {
         error_clear_last();
-        if (!empty($this->handle) && @rewind($this->handle) === false) {
+        if (!empty($this->_handle) && @rewind($this->_handle) === false) {
             $err = error_get_last();
             throw new Exception('ошибка переметки файла: ' . $this->filename .': '. $err['message']);
         }
 
-        $this->lineNo = null;
-        $this->current = null;
+        $this->_lineNo = null;
+        $this->_current = null;
     }
 
     /**
@@ -173,46 +169,46 @@ class CSVFile extends BaseObject implements \Iterator
     public function readLine()
     {
         // открываем файл
-        if (empty($this->handle)) {
+        if (empty($this->_handle)) {
             if (! isset($this->filename)) {
                 throw new InvalidConfigException('filename or handler');
             }
 
-            $this->handle = @fopen($this->filename, 'rt+', false, $this->context);
-            if (empty($this->handle)) {
+            $this->_handle = @fopen($this->filename, 'rt+', false, /** @scrutinizer ignore-type */ $this->context);
+            if (empty($this->_handle)) {
                 $err = error_get_last();
-                error_clear_last();
+                @error_clear_last();
                 throw new Exception('ошибка открытия файла: ' . $this->filename . ': ' . $err['message']);
             }
 
-            $this->lineNo = null;
+            $this->_lineNo = null;
         }
 
         // читаем строку
-        error_clear_last();
-        $line = @fgetcsv($this->handle, null, $this->delimiter, $this->enclosure, $this->escape);
+        @error_clear_last();
+        $line = @fgetcsv($this->_handle, null, $this->delimiter, $this->enclosure, $this->escape);
         if ($line === false) {
             $err = error_get_last();
-            error_clear_last();
+            @error_clear_last();
             if (isset($err)) {
                 throw new Exception('ошибка чтения файла: ' . $this->filename . ': ' . $err['message']);
             }
 
             // конец файла
-            $this->current = null;
+            $this->_current = null;
         } else {
             // счетчик текущей строки
-            if (!isset($this->lineNo)) {
-                $this->lineNo = 0;
+            if (!isset($this->_lineNo)) {
+                $this->_lineNo = 0;
             } else {
-                $this->lineNo ++;
+                $this->_lineNo ++;
             }
 
             // декодируем данные
-            $this->current = $this->decode($line);
+            $this->_current = $this->decode($line);
         }
 
-        return $this->current;
+        return $this->_current;
     }
 
     /**
@@ -227,18 +223,18 @@ class CSVFile extends BaseObject implements \Iterator
     public function writeLine(array $line)
     {
         // запоминаем текущую строку
-        $this->current = $line;
+        $this->_current = $line;
 
         // открываем файл
-        if (empty($this->handle)) {
+        if (empty($this->_handle)) {
             if (! isset($this->filename)) {
                 $this->filename = 'php://temp';
             }
 
-            error_clear_last();
-            $this->handle = @fopen($this->filename, 'wt+', false, $this->context);
-            if (empty($this->handle)) {
-                $err = error_get_last();
+            @error_clear_last();
+            $this->_handle = @fopen($this->filename, 'wt+', false, /** @scrutinizer ignore-type */ $this->context);
+            if (empty($this->_handle)) {
+                $err = @error_get_last();
                 throw new Exception('ошибка открытия файла: ' . $this->filename . ': ' . $err['message']);
             }
         }
@@ -247,18 +243,18 @@ class CSVFile extends BaseObject implements \Iterator
         $line = $this->encode($line);
 
         // пишем в файл
-        error_clear_last();
-        $ret = @fputcsv($this->handle, $line, $this->delimiter, $this->enclosure, $this->escape);
+        @error_clear_last();
+        $ret = @fputcsv($this->_handle, $line, $this->delimiter, $this->enclosure, $this->escape);
         if ($ret === false) {
             $err = error_get_last();
             throw new Exception('ошибка записи в файл: ' . $this->filename . ': ' . $err['message']);
         }
 
         // счетчик строк
-        if (!isset($this->lineNo)) {
-            $this->lineNo = 0;
+        if (!isset($this->_lineNo)) {
+            $this->_lineNo = 0;
         } else {
-            $this->lineNo ++;
+            $this->_lineNo ++;
         }
 
         return $ret;
@@ -284,7 +280,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function key()
     {
-        return $this->lineNo;
+        return $this->_lineNo;
     }
 
     /**
@@ -294,7 +290,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function current()
     {
-        return $this->current;
+        return $this->_current;
     }
 
     /**
@@ -312,7 +308,7 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function valid()
     {
-        return $this->current !== null;
+        return $this->_current !== null;
     }
 
     /**

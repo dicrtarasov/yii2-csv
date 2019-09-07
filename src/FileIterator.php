@@ -25,16 +25,16 @@ class FileIterator extends BaseObject implements \Iterator
     public $filename;
 
     /** @var array|resource контекст файла */
-    public $context;
+    public $_context;
 
     /** @var resource файловый указатель */
-    protected $handle;
+    protected $_handle;
 
     /** @var int|null номер текущей строки */
-    protected $lineNo;
+    protected $_lineNo;
 
     /** @var string текущая строка */
-    protected $line;
+    protected $_line;
 
     /**
      * {@inheritDoc}
@@ -51,12 +51,12 @@ class FileIterator extends BaseObject implements \Iterator
         }
 
         // контекст
-        if (empty($this->context)) {
-            $this->context = [];
+        if (empty($this->_context)) {
+            $this->_context = [];
         }
 
-        if (is_array($this->context)) {
-            $this->context = stream_context_create($this->context);
+        if (is_array($this->_context)) {
+            $this->_context = stream_context_create($this->_context);
         }
 
         // файл
@@ -66,10 +66,10 @@ class FileIterator extends BaseObject implements \Iterator
         }
 
         // открываем файл
-        $this->handle = @fopen($this->filename, 'rt', false, $this->context);
-        if (empty($this->handle)) {
+        $this->_handle = @fopen($this->filename, 'rt', false, $this->_context);
+        if ($this->_handle === false) {
             $err = error_get_last();
-            error_clear_last();
+            @error_clear_last();
             throw new Exception('ошибка открытия файла: ' . $this->filename . ': ' . $err['message']);
         }
     }
@@ -79,21 +79,21 @@ class FileIterator extends BaseObject implements \Iterator
      */
     protected function readLine()
     {
-        $this->line = fgets($this->handle);
-        if ($this->line === false) {
+        $this->_line = fgets($this->_handle);
+        if ($this->_line === false) {
             // конец файла
-            $this->line = null;
+            $this->_line = null;
         } else {
             // увеличиваем счетчик строк
-            if (isset($this->lineNo)) {
-                $this->lineNo ++;
+            if (isset($this->_lineNo)) {
+                $this->_lineNo ++;
             } else {
-                $this->lineNo = 0;
+                $this->_lineNo = 0;
             }
 
             // перекодируем данные
             if (!empty($this->charset)) {
-                $this->line = iconv($this->charset, 'utf-8//TRANSLIT', $this->line);
+                $this->_line = iconv($this->charset, 'utf-8//TRANSLIT', $this->_line);
             }
         }
     }
@@ -105,15 +105,15 @@ class FileIterator extends BaseObject implements \Iterator
      */
     public function rewind()
     {
-        if (@rewind($this->handle) === false) {
+        if (@rewind($this->_handle) === false) {
             $err = error_get_last();
             error_clear_last();
             throw new Exception('ошибка перемотки: ' . $this->filename . ': ' . $err['message']);
         }
 
         // сбрасываем состояние
-        $this->lineNo = null;
-        $this->line = null;
+        $this->_lineNo = null;
+        $this->_line = null;
 
         // читаем следующую строку
         $this->readLine();
@@ -126,7 +126,7 @@ class FileIterator extends BaseObject implements \Iterator
      */
     public function key()
     {
-        return $this->lineNo;
+        return $this->_lineNo;
     }
 
     /**
@@ -136,7 +136,7 @@ class FileIterator extends BaseObject implements \Iterator
      */
     public function current()
     {
-        return $this->line;
+        return $this->_line;
     }
 
     /**
@@ -154,7 +154,7 @@ class FileIterator extends BaseObject implements \Iterator
      */
     public function valid()
     {
-        return isset($this->line);
+        return isset($this->_line);
     }
 
     /**
@@ -162,8 +162,8 @@ class FileIterator extends BaseObject implements \Iterator
      */
     public function __destruct()
     {
-        if (!empty($this->handle)) {
-            @fclose($this->handle);
+        if (!empty($this->_handle)) {
+            @fclose($this->_handle);
         }
     }
 }

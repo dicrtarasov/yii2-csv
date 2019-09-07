@@ -84,7 +84,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             throw new \InvalidArgumentException('handle');
         }
 
-        if (! empty($this->charset) && $this->charset !== self::CHARSET_UTF8) {
+        if (! empty($this->charset) && $this->charset !== CSVFile::CHARSET_DEFAULT) {
             foreach ($line as $k => $v) {
                 $line[$k] = iconv('utf-8', $this->charset . '//TRANSLIT', $v);
             }
@@ -264,6 +264,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     public function format($response = null)
     {
         if (empty($response)) {
+            /** @var \yii\web\Response $response */
             $response = \Yii::$app->response;
         }
 
