@@ -210,7 +210,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             'delimiter' => $this->delimiter,
             'escape' => $this->escape,
             'enclosure' => $this->enclosure,
-            'charset' => $this->charset
+            'charset' => $this->charset,
         ]);
 
         if (! empty($data)) {
@@ -226,7 +226,6 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
                 }
 
                 $row = $this->convertRow($row);
-
                 $line = [];
 
                 if (!empty($this->fields)) { // если заданы заголовки, то выбираем только заданные поля в заданной последовательности

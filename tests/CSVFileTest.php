@@ -33,11 +33,11 @@ class CSVFileTest extends TestCase
 		}
 
 		// проверяем номер текущей строки
-		self::assertEquals(1, $csvFile->_lineNo);
+		self::assertEquals(1, $csvFile->lineNo);
 
 		// сбрасваем
 		$csvFile->reset();
-		self::assertEquals(null, $csvFile->_lineNo);
+		self::assertEquals(null, $csvFile->lineNo);
 
 		// выбираем обратно через итерацию
 		$data = [];
@@ -47,6 +47,6 @@ class CSVFileTest extends TestCase
 
 		self::assertEquals(self::TEST_DATA, $data);
 		self::assertEquals(null, $csvFile->current());
-		self::assertEquals(1, $csvFile->_lineNo);
+		self::assertEquals(1, $csvFile->lineNo);
 	}
 }

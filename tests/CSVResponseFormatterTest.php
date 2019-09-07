@@ -47,24 +47,17 @@ class CSVResponseFormatterTest extends TestCase
 		    'charset' => CSVFile::CHARSET_EXCEL,
 			'delimiter' => CSVFile::DELIMITER_EXCEL,
 		    'escape' => CSVFile::ESCAPE_DEFAULT,
-			'headers' => ['Имя', 'Телефон', 'Комментарий'],
-			'format' => function(\stdClass $data, $csvFormater) {
-				return [
-					$data->name,
-					$data->phone,
-					$data->comment
-				];
-			}
+			'fields' => ['name' => 'Имя', 'phone' => 'Телефон', 'comment' => 'Комментарий'],
 		]);
 
 		$response = \Yii::$app->response;
 		$response->data = self::$testData;
 		$response = $csvFormat->format($response);
 
+		self::assertNull($response->data);
 		self::assertEquals('attachment; filename="test.csv"', $response->headers->get('content-disposition'));
 		self::assertEquals('application/vnd.ms-excel; charset=windows-1251', $response->headers->get('content-type'));
 		self::assertEquals(93, $response->headers->get('content-length'));
 		self::assertInternalType('resource', $response->stream);
-		self::assertNull($response->data);
 	}
 }

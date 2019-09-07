@@ -110,9 +110,9 @@ class CSVFile extends BaseObject implements \Iterator
      */
     public function reset()
     {
-        error_clear_last();
+        @error_clear_last();
         if (!empty($this->_handle) && @rewind($this->_handle) === false) {
-            $err = error_get_last();
+            $err = @error_get_last();
             throw new Exception('ошибка переметки файла: ' . $this->filename .': '. $err['message']);
         }
 
@@ -184,17 +184,21 @@ class CSVFile extends BaseObject implements \Iterator
             $this->_lineNo = null;
         }
 
-        // читаем строку
+        // перед чтением строки сбрасываем ошибку чтобы отличат конец файла от ошибки
         @error_clear_last();
+
+        // читаем строку
         $line = @fgetcsv($this->_handle, null, $this->delimiter, $this->enclosure, $this->escape);
         if ($line === false) {
+            // проверяем была ли ошибка
             $err = error_get_last();
-            @error_clear_last();
             if (isset($err)) {
+                // в случае ошибки выбрасываем исключение
+                @error_clear_last();
                 throw new Exception('ошибка чтения файла: ' . $this->filename . ': ' . $err['message']);
             }
 
-            // конец файла
+            // принимаем как конец файла
             $this->_current = null;
         } else {
             // счетчик текущей строки
@@ -231,10 +235,10 @@ class CSVFile extends BaseObject implements \Iterator
                 $this->filename = 'php://temp';
             }
 
-            @error_clear_last();
             $this->_handle = @fopen($this->filename, 'wt+', false, /** @scrutinizer ignore-type */ $this->context);
-            if (empty($this->_handle)) {
+            if ($this->_handle === false) {
                 $err = @error_get_last();
+                @error_clear_last();
                 throw new Exception('ошибка открытия файла: ' . $this->filename . ': ' . $err['message']);
             }
         }
@@ -243,10 +247,10 @@ class CSVFile extends BaseObject implements \Iterator
         $line = $this->encode($line);
 
         // пишем в файл
-        @error_clear_last();
         $ret = @fputcsv($this->_handle, $line, $this->delimiter, $this->enclosure, $this->escape);
         if ($ret === false) {
             $err = error_get_last();
+            @error_clear_last();
             throw new Exception('ошибка записи в файл: ' . $this->filename . ': ' . $err['message']);
         }
 
