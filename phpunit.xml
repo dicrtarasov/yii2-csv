@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ @author Igor A Tarasov <develop@dicr.org>
+  ~ @version 08.07.20 07:43:33
+  -->
+
 <phpunit
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/6.3/phpunit.xsd"
-    bootstrap="tests/bootstrap.php"
-    convertErrorsToExceptions="true"
-    convertNoticesToExceptions="true"
-    convertWarningsToExceptions="true"
-    stopOnError="false"
-    stopOnFailure="false"
-    stopOnIncomplete="false"
-    stopOnSkipped="false"
-    stopOnRisky="false"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.5/phpunit.xsd"
+        bootstrap="tests/bootstrap.php"
 >
     <testsuites>
         <testsuite name="my tests">

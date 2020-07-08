@@ -1,40 +1,41 @@
 {
-	"name" : "dicr/yii2-csv",
-	"description" : "CSV for Yii2",
-	"type" : "yii2-extension",
-	"authors" : [{
-			"name" : "Igor Tarasov",
-			"email" : "develop@dicr.org",
-			"homepage" : "http://dicr.org",
-			"role" : "developer"
-		}
-	],
-	"minimum-stability" : "stable",
-	"require" : {
-		"php" : ">=7.0",
-		"yiisoft/yii2" : "~2.0"
-	},
-	"autoload" : {
-		"psr-4" : {
-			"dicr\\csv\\" : "src"
-		}
-	},
-	"keywords" : [
-		"php yii2 csv"
-	],
-	"repositories" : [{
-			"type" : "composer",
-			"url" : "https://asset-packagist.org"
-		}
-	],
-	"homepage" : "https://gitlab.com/dicr/yii2-csv",
-	"support" : {
-		"source" : "https://gitlab.com/dicr/yii2-csv.git"
-	},
-	"require-dev" : {
-		"phpunit/phpunit" : "~6"
-	},
-	"scripts" : {
-		"test" : "./vendor/bin/phpunit --bootstrap ./tests/bootstrap.php"
-	}
+    "name": "dicr/yii2-csv",
+    "description": "CSV for Yii2",
+    "type": "yii2-extension",
+    "license": "MIT",
+    "keywords": ["dicr", "php", "yii2", "csv"],
+    "authors": [
+        {
+            "name": "Igor Tarasov",
+            "email": "develop@dicr.org",
+            "homepage": "http://dicr.org",
+            "role": "developer"
+        }
+    ],
+    "homepage": "https://gitlab.com/dicr/yii2-csv",
+    "support": {
+        "source": "https://gitlab.com/dicr/yii2-csv.git"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "dicr\\csv\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "dicr\\tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "~7.2",
+        "ext-iconv": "*",
+        "yiisoft/yii2": "~2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~9.2"
+    },
+    "repositories": [
+        {"type": "composer", "url": "https://asset-packagist.org"}
+    ]
 }

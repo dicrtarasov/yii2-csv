@@ -1,15 +1,28 @@
 <?php
+/**
+ * @author Igor A Tarasov <develop@dicr.org>
+ * @version 08.07.20 07:43:31
+ */
+
+declare(strict_types = 1);
 namespace dicr\csv;
 
 use ArrayAccess;
 use Traversable;
+use Yii;
 use yii\base\Arrayable;
 use yii\base\Component;
 use yii\base\Exception;
 use yii\base\Model;
 use yii\data\DataProviderInterface;
 use yii\db\Query;
+use yii\web\Response;
 use yii\web\ResponseFormatterInterface;
+use function array_keys;
+use function is_array;
+use function is_callable;
+use function is_iterable;
+use function is_object;
 
 /**
  * CSV File.
@@ -30,16 +43,14 @@ use yii\web\ResponseFormatterInterface;
  * При записи, если не задан handle и filename, то handle открывается в php://temp.
  *
  * @property-read string|null $mimeType тип контента на основании contentType и charset
- * @author Igor (Dicr) Tarasov <develop@dicr.org>
- * @version 2018
  */
 class CSVResponseFormatter extends Component implements ResponseFormatterInterface
 {
     /** @var string Content-Type текст */
-    const CONTENT_TYPE_TEXT = 'text/csv';
+    public const CONTENT_TYPE_TEXT = 'text/csv';
 
     /** @var string Content-Type excel */
-    const CONTENT_TYPE_EXCEL = 'application/vnd.ms-excel';
+    public const CONTENT_TYPE_EXCEL = 'application/vnd.ms-excel';
 
     /** @var string|null имя файла */
     public $filename;
@@ -71,40 +82,11 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     public $format;
 
     /**
-     * Запись строки в CSV
-     *
-     * @param array $line
-     * @param resource $handle
-     * @throws Exception
-     * @return int bytes count
-     */
-    protected function writeLine(array $line, $handle)
-    {
-        if (empty($handle)) {
-            throw new \InvalidArgumentException('handle');
-        }
-
-        if (! empty($this->charset) && $this->charset !== CSVFile::CHARSET_DEFAULT) {
-            foreach ($line as $k => $v) {
-                $line[$k] = iconv('utf-8', $this->charset . '//TRANSLIT', $v);
-            }
-        }
-
-        $ret = @fputcsv($handle, $line, $this->delimiter, $this->enclosure, $this->escape);
-        if ($ret === false) {
-            $error = error_get_last();
-            throw new Exception($error['message']);
-        }
-
-        return $ret;
-    }
-
-    /**
      * Конвертирует данные в Traversable
      *
-     * @param array|object|\Traversable|Arrayable|Query|DataProviderInterface $data
-     * @throws Exception
+     * @param array|object|Traversable|Arrayable|Query|DataProviderInterface $data
      * @return array|Traversable
+     * @throws Exception
      */
     protected static function convertData($data)
     {
@@ -112,7 +94,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             return [];
         }
 
-        if (is_array($data) || ($data instanceof Traversable)) {
+        if (is_iterable($data)) {
             return $data;
         }
 
@@ -139,9 +121,8 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
      * Конвертирует строку данных в массив значений
      *
      * @param array|object|Traversable|ArrayAccess|Arrayable|Model $row - данные строки
-     * @param array|false $fields
-     *
      * @return array|ArrayAccess|Traversable массив значений
+     * @throws Exception
      */
     protected function convertRow($row)
     {
@@ -149,7 +130,7 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
             return [];
         }
 
-        if (is_array($row) || ($row instanceof Traversable) || ($row instanceof \ArrayAccess)) {
+        if (is_iterable($row) || ($row instanceof ArrayAccess)) {
             return $row;
         }
 
@@ -178,14 +159,11 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
         $mimeType = null;
 
         if (! empty($this->contentType)) {
-
             $mimeType = $this->contentType;
-
-            if (! empty($this->charset) && ! preg_match('~charset~uism', $this->contentType)) {
-
+            if (! empty($this->charset) && stripos($this->contentType, 'charset') === false) {
                 $charset = $this->charset;
 
-                if (preg_match('~cp1251~uism', $charset)) {
+                if (stripos($charset, 'cp1251') !== false) {
                     $charset = 'windows-1251';
                 }
 
@@ -199,8 +177,9 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     /**
      * Форматирует ответ в CSV-файл
      *
-     * @param array|\Traversable|\yii\base\Arrayable|\yii\db\Query|\yii\data\DataProviderInterface $data данные
+     * @param array|Traversable|Arrayable|Query|DataProviderInterface $data данные
      * @return CSVFile
+     * @throws Exception
      */
     public function formatData($data)
     {
@@ -214,36 +193,35 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
         ]);
 
         if (! empty($data)) {
-
             // пишем заголовок
             if (! empty($this->fields)) {
                 $csvFile->writeLine(array_values($this->fields));
             }
 
-            foreach ($this->convertData($data) as $row) {
+            foreach (self::convertData($data) as $row) {
                 if (is_callable($this->format)) {
                     $row = ($this->format)($row, $this);
                 }
 
                 $row = $this->convertRow($row);
-                $line = [];
 
-                if (!empty($this->fields)) { // если заданы заголовки, то выбираем только заданные поля в заданной последовательности
+                $line = [];
+                if (! empty($this->fields)) { // если заданы заголовки, то выбираем только заданные поля в заданной последовательности
                     // проверяем доступность прямой выборки индекса из массива
-                    if (!is_array($row) && !($row instanceof ArrayAccess)) {
+                    if (! is_array($row) && ! ($row instanceof ArrayAccess)) {
                         throw new Exception('для использования списка полей fields необходимо чтобы элемент данных был либо array, либо типа ArrayAccess');
                     }
 
-                    foreach (array_keys($this->fields) as $field) {
-                        $line[] = $row[$field] ?? null;
-                    }
+                    $line = array_map(static function(string $field) use ($row) {
+                        return $row[$field] ?? '';
+                    }, array_keys($this->fields));
                 } else { // обходим все поля
                     // проверяем что данные доступны для обхода
-                    if (!is_array($row) && !($row instanceof Traversable)) {
+                    if (! is_array($row) && ! ($row instanceof Traversable)) {
                         throw new Exception('элемент данных должен быть либо array, либо типа Traversable');
                     }
 
-                    // обходим тип Traversable
+                    // обходим тип iterable ВНИМАНИЕ !!! нельзя array_map
                     foreach ($row as $col) {
                         $line[] = $col;
                     }
@@ -257,23 +235,29 @@ class CSVResponseFormatter extends Component implements ResponseFormatterInterfa
     }
 
     /**
-     * {@inheritDoc}
-     * @see \yii\web\ResponseFormatterInterface::format()
+     * @inheritDoc
+     * @noinspection ClassMethodNameMatchesFieldNameInspection
+     * @throws Exception
      */
     public function format($response = null)
     {
         if (empty($response)) {
-            /** @var \yii\web\Response $response */
-            $response = \Yii::$app->response;
+            /** @var Response $response */
+            /** @noinspection CallableParameterUseCaseInTypeContextInspection */
+            $response = Yii::$app->response;
         }
 
         // пишем во временный CSVFile (php://temp)
         $csvFile = $this->formatData($response->data);
-
         $response->data = null;
 
         // заголовки загрузки файла
-        $response->setDownloadHeaders($this->filename, $this->getMimeType(), false, ftell($csvFile->handle));
+        $response->setDownloadHeaders(
+            $this->filename,
+            $this->getMimeType(),
+            false,
+            ftell($csvFile->handle)
+        );
 
         // перематываем файл в начало
         $csvFile->reset();

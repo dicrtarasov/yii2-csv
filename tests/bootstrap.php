@@ -1,29 +1,22 @@
 <?php
+/**
+ * @author Igor A Tarasov <develop@dicr.org>
+ * @version 08.07.20 07:42:57
+ */
+
+/** @noinspection PhpUnused */
+/** @noinspection PhpUnhandledExceptionInspection */
+declare(strict_types = 1);
+
 use yii\web\Application;
 
-error_reporting(-1);
-ini_set('display_errors', 1);
-
-define('YII_ENABLE_ERROR_HANDLER', false);
+define('YII_ENV', 'dev');
 define('YII_DEBUG', true);
 
-$_SERVER['SCRIPT_NAME'] = $_SERVER['SCRIPT_FILENAME'] = __FILE__;
-
-require_once(__DIR__ . '/../vendor/autoload.php');
-require_once(__DIR__ . '/../vendor/yiisoft/yii2/Yii.php');
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/vendor/yiisoft/yii2/Yii.php';
 
 new Application([
-	'id' => 'testapp',
-	'basePath' => __DIR__,
-	'vendorPath' => dirname(__DIR__).'/vendor',
-	'aliases' => [
-		'@dicr/csv' => dirname(__DIR__) . '/src',
-		'@dicr/tests' => dirname(__DIR__) . '/tests'
-	],
-	'components' => [
-		'db' => [
-			'class' => 'yii\db\Connection',
-			'dsn' => 'sqlite::memory:',
-		],
-	],
+    'id' => 'test',
+    'basePath' => __DIR__
 ]);

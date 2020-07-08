@@ -1,9 +1,17 @@
 <?php
+/**
+ * @author Igor A Tarasov <develop@dicr.org>
+ * @version 08.07.20 07:43:33
+ */
+
+declare(strict_types = 1);
 namespace dicr\csv;
 
+use Iterator;
 use yii\base\BaseObject;
 use yii\base\Exception;
 use yii\base\InvalidConfigException;
+use function is_resource;
 
 /**
  * CSV File.
@@ -12,38 +20,35 @@ use yii\base\InvalidConfigException;
  *
  * @property-read int|null $lineNo номер текущей строки
  * @property-read resource|null $handle указатель файла
- *
- * @author Igor (Dicr) Tarasov <develop@dicr.org>
- * @version 2018
  */
-class CSVFile extends BaseObject implements \Iterator
+class CSVFile extends BaseObject implements Iterator
 {
     /** @var string кодировка Excel */
-    const CHARSET_EXCEL = 'cp1251';
+    public const CHARSET_EXCEL = 'cp1251';
 
     /** @var string кодировка по-умолчанию */
-    const CHARSET_DEFAULT = 'utf-8';
+    public const CHARSET_DEFAULT = 'utf-8';
 
     /** @var string кодировка для преобразования при чтении/записи */
     public $charset = self::CHARSET_DEFAULT;
 
     /** @var string разделитель полей по-умолчанию */
-    const DELIMITER_DEFAULT = ',';
+    public const DELIMITER_DEFAULT = ',';
 
-    /** @var string раздлитель полей Excel */
-    const DELIMITER_EXCEL = ';';
+    /** @var string разделитель полей Excel */
+    public const DELIMITER_EXCEL = ';';
 
     /** @var string разделитель полей */
     public $delimiter = self::DELIMITER_DEFAULT;
 
-    /** @var string ограничиель полей по-умолчанию */
-    const ENCLOSURE_DEFAULT = '"';
+    /** @var string ограничитель полей по-умолчанию */
+    public const ENCLOSURE_DEFAULT = '"';
 
     /** @var string символ ограничения строк в полях */
     public $enclosure = self::ENCLOSURE_DEFAULT;
 
     /** @var string символ экранирования по-умолчанию */
-    const ESCAPE_DEFAULT = '\\';
+    public const ESCAPE_DEFAULT = '\\';
 
     /** @var string символ для экранирования */
     public $escape = self::ESCAPE_DEFAULT;
@@ -54,18 +59,17 @@ class CSVFile extends BaseObject implements \Iterator
     /** @var resource|array|null контекст файловых операций */
     public $context;
 
-    /** @var resource|null файловый десриптор */
+    /** @var resource|null файловый дескриптор */
     protected $_handle;
 
     /** @var int|null текущий номер строки файла */
     protected $_lineNo;
 
     /** @var string[]|null текущие данные для Iterable */
-    protected $_current = null;
+    protected $_current;
 
     /**
-     * {@inheritdoc}
-     * @see \yii\base\BaseObject::init()
+     * @inheritdoc
      */
     public function init()
     {
@@ -73,12 +77,12 @@ class CSVFile extends BaseObject implements \Iterator
 
         // если задана кодировка по-умолчанию utf-8, то удаляем значение
         $this->charset = trim($this->charset);
-        if ($this->charset == '' || preg_match('~^utf\-?8$~uism', $this->charset)) {
+        if ($this->charset === '' || preg_match('~^utf\-?8$~uim', $this->charset)) {
             $this->charset = self::CHARSET_DEFAULT;
         }
 
         // контекст
-        if (!is_resource($this->context)) {
+        if (! is_resource($this->context)) {
             $this->context = stream_context_create($this->context);
         }
     }
@@ -86,7 +90,7 @@ class CSVFile extends BaseObject implements \Iterator
     /**
      * Возвращает номер текущей строки
      *
-     * @return int|NULL
+     * @return int|null
      */
     public function getLineNo()
     {
@@ -96,7 +100,7 @@ class CSVFile extends BaseObject implements \Iterator
     /**
      * Возвращает указатель файла
      *
-     * @return resource|NULL
+     * @return resource|null
      */
     public function getHandle()
     {
@@ -104,16 +108,16 @@ class CSVFile extends BaseObject implements \Iterator
     }
 
     /**
-     * Перематывает указатель в начальное состояние
+     * Перематывает указатель в начальное состояние.
      *
      * @throws Exception
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     public function reset()
     {
-        @error_clear_last();
-        if (!empty($this->_handle) && @rewind($this->_handle) === false) {
+        if (! empty($this->_handle) && @rewind($this->_handle) === false) {
             $err = @error_get_last();
-            throw new Exception('ошибка переметки файла: ' . $this->filename .': '. $err['message']);
+            throw new Exception('ошибка переметки файла: ' . $this->filename . ': ' . $err['message']);
         }
 
         $this->_lineNo = null;
@@ -121,39 +125,41 @@ class CSVFile extends BaseObject implements \Iterator
     }
 
     /**
-     * Декодирует строку из заданной кодировки
+     * Декодирует строку из заданной кодировки.
      *
      * @param array $line
      * @return string[]
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     protected function decode(array $line)
     {
-        if ($this->charset != self::CHARSET_DEFAULT) { // конвертируем кодировку
-            foreach ($line as $key => $val) {
-                $line[$key] = @iconv($this->charset, 'utf-8//TRANSLIT', (string) $val);
-            }
+        if ($this->charset !== self::CHARSET_DEFAULT) {
+            $line = array_map(function($val) {
+                return @iconv($this->charset, 'utf-8//TRANSLIT', (string)$val);
+            }, $line);
         }
 
         return $line;
     }
 
     /**
-     * Кодирует строку в заданую кодировку
+     * Кодирует строку в заданную кодировку
      *
      * @param array $line
      * @return string[]
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     protected function encode(array $line)
     {
-        if (($this->charset != self::CHARSET_DEFAULT)) {
+        if (($this->charset !== self::CHARSET_DEFAULT)) {
             $charset = $this->charset;
             if (strpos($charset, '//') === false) {
                 $charset .= '//TRANSLIT';
             }
 
-            foreach ($line as $key => $val) {
-                $line[$key] = @iconv('utf-8', $charset, (string) $val);
-            }
+            $line = array_map(static function($val) use ($charset) {
+                return @iconv('utf-8', $charset, (string)$val);
+            }, $line);
         }
 
         return $line;
@@ -163,8 +169,9 @@ class CSVFile extends BaseObject implements \Iterator
      * Читает сроку данных.
      * Если задан charset, то конвертирует кодировку.
      *
-     * @throws \yii\base\Exception ошибка открытия файла
      * @return string[] текущую строку
+     * @throws Exception ошибка открытия файла
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     public function readLine()
     {
@@ -175,6 +182,7 @@ class CSVFile extends BaseObject implements \Iterator
             }
 
             $this->_handle = @fopen($this->filename, 'rt+', false, /** @scrutinizer ignore-type */ $this->context);
+            /** @noinspection NotOptimalIfConditionsInspection */
             if (empty($this->_handle)) {
                 $err = error_get_last();
                 @error_clear_last();
@@ -189,7 +197,18 @@ class CSVFile extends BaseObject implements \Iterator
 
         // читаем строку
         $line = @fgetcsv($this->_handle, null, $this->delimiter, $this->enclosure, $this->escape);
-        if ($line === false) {
+
+        if ($line !== false) {
+            // счетчик текущей строки
+            if (isset($this->_lineNo)) {
+                $this->_lineNo ++;
+            } else {
+                $this->_lineNo = 0;
+            }
+
+            // декодируем данные
+            $this->_current = $this->decode($line);
+        } else {
             // проверяем была ли ошибка
             $err = error_get_last();
             if (isset($err)) {
@@ -200,16 +219,6 @@ class CSVFile extends BaseObject implements \Iterator
 
             // принимаем как конец файла
             $this->_current = null;
-        } else {
-            // счетчик текущей строки
-            if (!isset($this->_lineNo)) {
-                $this->_lineNo = 0;
-            } else {
-                $this->_lineNo ++;
-            }
-
-            // декодируем данные
-            $this->_current = $this->decode($line);
         }
 
         return $this->_current;
@@ -221,8 +230,9 @@ class CSVFile extends BaseObject implements \Iterator
      * Если задан charset, то кодирует в заданную кодировку.
      *
      * @param array $line
-     * @throws \yii\base\Exception ошибка открытия/записи
      * @return int длина записанной строки
+     * @throws Exception ошибка открытия/записи
+     * @noinspection PhpUsageOfSilenceOperatorInspection
      */
     public function writeLine(array $line)
     {
@@ -255,10 +265,10 @@ class CSVFile extends BaseObject implements \Iterator
         }
 
         // счетчик строк
-        if (!isset($this->_lineNo)) {
-            $this->_lineNo = 0;
-        } else {
+        if (isset($this->_lineNo)) {
             $this->_lineNo ++;
+        } else {
+            $this->_lineNo = 0;
         }
 
         return $ret;
@@ -299,6 +309,8 @@ class CSVFile extends BaseObject implements \Iterator
 
     /**
      * Читает следующую строку
+     *
+     * @throws Exception
      */
     public function next()
     {
@@ -308,7 +320,7 @@ class CSVFile extends BaseObject implements \Iterator
     /**
      * Проверяет корректность текущей позиции
      *
-     * @return boolean
+     * @return bool
      */
     public function valid()
     {
