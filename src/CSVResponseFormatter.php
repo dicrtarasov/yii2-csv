@@ -43,6 +43,7 @@ use function is_object;
  * При записи, если не задан handle и filename, то handle открывается в php://temp.
  *
  * @property-read string|null $mimeType тип контента на основании contentType и charset
+ * @deprecated перемещено в dicr/yii2-file
  */
 class CSVResponseFormatter extends Component implements ResponseFormatterInterface
 {

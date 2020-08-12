@@ -20,6 +20,7 @@ use function is_resource;
  *
  * @property-read int|null $lineNo номер текущей строки
  * @property-read resource|null $handle указатель файла
+ * @deprecated перемещено в dicr/yii2-file
  */
 class CSVFile extends BaseObject implements Iterator
 {
